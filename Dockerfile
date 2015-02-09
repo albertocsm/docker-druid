@@ -37,22 +37,21 @@ RUN mkdir -p /var/lib/druid
 RUN chown druid:druid /var/lib/druid
 
 # Pre-cache Druid dependencies
-RUN mvn dependency:get -DremoteRepositories=https://metamx.artifactoryonline.com/metamx/pub-libs-releases-local -Dartifact=io.druid:druid-services:0.6.171
+RUN mvn dependency:get -DremoteRepositories=https://metamx.artifactoryonline.com/metamx/pub-libs-releases-local -Dartifact=io.druid:druid-services:0.6.171 -Dartifact=io.druid.extensions:druid-examples:0.6.171
 
 # Druid (release tarball)
 ENV DRUID_VERSION 0.6.171
 RUN wget -q -O - http://static.druid.io/artifacts/releases/druid-services-$DRUID_VERSION-bin.tar.gz | tar -xzf - -C /usr/local
 RUN ln -s /usr/local/druid-services-$DRUID_VERSION /usr/local/druid
 
+#WORKDIR /usr/local/druid
+
+#RUN java "-Ddruid.extensions.coordinates=[\"io.druid.extensions:druid-s3-extensions\", \"io.druid.extensions:mysql-metadata-storage\", \"io.druid.extensions:druid-examples\"]" -Ddruid.extensions.localRepository=/usr/local/druid/repository -Ddruid.extensions.remoteRepositories=[\"file:///root/.m2/repository/\",\"http://repo1.maven.org/maven2/\",\"https://metamx.artifactoryonline.com/metamx/pub-libs-releases-local\"] -cp /usr/local/druid/lib/* io.druid.cli.Main tools pull-deps
+
 WORKDIR /
 
 # Setup metadata store
 RUN /etc/init.d/mysql start && echo "GRANT ALL ON druid.* TO 'druid'@'localhost' IDENTIFIED BY 'diurd'; CREATE database druid CHARACTER SET utf8;" | mysql -u root && /etc/init.d/mysql stop
-
-# Add sample data
-###RUN /etc/init.d/mysql start && java -cp /usr/local/druid/lib/druid-services-*-selfcontained.jar -Ddruid.extensions.coordinates=[\"io.druid.extensions:mysql-metadata-storage\"] -Ddruid.metadata.storage.type=mysql io.druid.cli.Main tools metadata-init --connectURI="jdbc:mysql://localhost:3306/druid" --user=druid --password=diurd && /etc/init.d/mysql stop
-###ADD sample_data.sql sample_data.sql
-###RUN /etc/init.d/mysql start && cat sample-data.sql | mysql -u root druid && /etc/init.d/mysql stop
 
 #Add firehose spec and data
 ADD spec_file.spec /usr/local/druid/spec_file.spec

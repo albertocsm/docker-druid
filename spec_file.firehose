@@ -24,7 +24,7 @@
     {
         "type"    : "local",
         "baseDir" : "/usr/local/druid",
-        "filter"   : "*.josn",
+        "filter"   : "*.json",
         "parser" : 
         {
           "timestampSpec": 
